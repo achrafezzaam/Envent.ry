@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from models import Item
 
@@ -12,6 +12,7 @@ from database import(
     create_item,
     update_item,
     remove_item,
+    create_url_link,
 )
 
 app.add_middleware(
@@ -45,9 +46,16 @@ async def post_item(item:Item):
         return response
     raise HTTPException(400, "Something went wrong")
 
+@app.post('/api/set_url')
+async def add_image_url(file:UploadFile):
+    response = await create_url_link(file)
+    if response:
+        return response
+    raise HTTPException(400, "Something went wrong")
+
 @app.put('/api/item/{name}', response_model=Item)
-async def put_item(name:str,quantity:int,image_url:str):
-    response = await update_item(name, quantity,image_url)
+async def put_item(name:str,quantity:int):
+    response = await update_item(name, quantity)
     if response:
         return response
     raise HTTPException(404, "Item not found")
