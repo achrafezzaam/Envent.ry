@@ -46,9 +46,9 @@ async def post_item(item:Item):
         return response
     raise HTTPException(400, "Something went wrong")
 
-@app.post('/api/set_url')
-async def add_image_url(file:UploadFile):
-    response = await create_url_link(file)
+@app.post('/api/set_url', response_model=Item)
+async def add_image_url(name, file:UploadFile):
+    response = await create_url_link(name, file)
     if response:
         return response
     raise HTTPException(400, "Something went wrong")

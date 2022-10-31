@@ -39,6 +39,12 @@ async def update_item(name,quantity):
 # async def create_url_link(name, file:UploadFile):
     s3 = boto3.resource("s3")
     bucket = s3.Bucket(S3_BUCKET_NAME)
+
+    document = await collection.find_one({'name':name})
+    if document["image_url"]:
+        filename = document["image_url"].replace("https://{S3_BUCKET_NAME}.s3.amazonaws.com/","")
+        bucket.delete_object(Key=filename)
+    
     bucket.upload_fileobj(file.file, file.filename, ExtraArgs={"ACL": "public-read"})
 
     upload_file_url = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{file.filename}"
@@ -49,12 +55,21 @@ async def update_item(name,quantity):
     document = await collection.find_one({'name':name})
     return document
 
-async def create_url_link(file:UploadFile):
+async def create_url_link(name, file:UploadFile):
+
+    document = await collection.find_one({'name':name})
+    if document["image_url"]:
+        os.remove(document["image_url"])
+
     completeName = os.path.join('.\images', file.filename)
     async with aiofiles.open(completeName, 'wb') as out_file:
         content = file.file.read()  # async read chunk
         await out_file.write(content)  # async write chunk
-    return "Work done successfully"
+
+    await collection.update_one({"name":name},{"$set":{
+        "image_url"  : completeName,
+    }})
+    return document
 
 async def remove_item(name):
     await collection.delete_one({'name':name})
